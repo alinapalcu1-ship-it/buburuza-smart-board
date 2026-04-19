@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ÃŽnvÄƒÈ›Äƒm sÄƒ numÄƒrÄƒm cu Bubu</title>
+  <title>&#206;nv&#259;&#539;&#259;m s&#259; num&#259;r&#259;m cu Bubu</title>
   <style>
     :root {
       --red: #ff3045;
@@ -601,10 +601,10 @@
   </style>
 </head>
 <body>
-  <main class="app" aria-label="Activitate interactivÄƒ cu buburuza">
+  <main class="app" aria-label="Activitate interactiv&#259; cu buburuza">
     <header class="top-bar">
-      <h1>ÃŽnvÄƒÈ›Äƒm sÄƒ numÄƒrÄƒm cu Bubu</h1>
-      <p class="instruction">Alege o cifrÄƒ, apoi lipeÈ™te tot atÃ¢tea buline pe aripioare cÃ¢t Ã®È›i aratÄƒ cifra.</p>
+      <h1>&#206;nv&#259;&#539;&#259;m s&#259; num&#259;r&#259;m cu Bubu</h1>
+      <p class="instruction">Alege o cifr&#259;, apoi lipe&#537;te tot at&#226;tea buline pe aripioare c&#226;t &#238;&#539;i arat&#259; cifra.</p>
     </header>
 
     <section class="garden" aria-label="Buburuza mare">
@@ -616,7 +616,7 @@
         <span></span><span></span><span></span><span></span><span></span>
       </div>
 
-      <div class="ladybug-zone" id="ladybugZone" role="img" aria-label="O buburuzÄƒ mare pe care se pot pune buline">
+      <div class="ladybug-zone" id="ladybugZone" role="img" aria-label="O buburuz&#259; mare pe care se pot pune buline">
         <div class="ladybug" aria-hidden="true">
           <div class="leg left one"></div>
           <div class="leg left two"></div>
@@ -630,7 +630,7 @@
       </div>
     </section>
 
-    <aside class="side-column" aria-label="Panouri separate pentru cifre È™i buline">
+    <aside class="side-column" aria-label="Panouri separate pentru cifre &#537;i buline">
       <section class="numbers-panel" aria-labelledby="numbers-title">
         <h2 class="panel-title" id="numbers-title">Cifre</h2>
         <div class="number-dot-list" id="numberList" aria-label="Alege cifra"></div>
@@ -638,13 +638,13 @@
 
       <section class="dots-panel" aria-labelledby="dots-title">
         <h2 class="panel-title" id="dots-title">Buline</h2>
-        <div class="dots-list" id="dotsList" aria-label="Buline de tras pe buburuzÄƒ"></div>
+        <div class="dots-list" id="dotsList" aria-label="Buline de tras pe buburuz&#259;"></div>
       </section>
     </aside>
 
-    <section class="control-panel" aria-label="Verificare rÄƒspuns">
+    <section class="control-panel" aria-label="Verificare r&#259;spuns">
       <div class="status" id="status" role="status" aria-live="polite"></div>
-      <button class="action-btn check" id="checkButton" type="button">VerificÄƒ</button>
+      <button class="action-btn check" id="checkButton" type="button">Verific&#259;</button>
       <button class="action-btn reset" id="resetButton" type="button">Reia</button>
       <button class="action-btn fullscreen" id="fullscreenButton" type="button">Ecran complet</button>
     </section>
@@ -682,7 +682,7 @@
     const selectedDots = new Set();
 
     function dotWord(count) {
-      return count === 1 ? "bulinÄƒ" : "buline";
+      return count === 1 ? "bulin\u0103" : "buline";
     }
 
     function getAudioContext() {
@@ -771,7 +771,7 @@
         dot.className = "placed-dot";
         dot.style.left = `${position.left}%`;
         dot.style.top = `${position.top}%`;
-        dot.setAttribute("aria-label", `Scoate bulina ${dotNumber} de pe buburuzÄƒ`);
+        dot.setAttribute("aria-label", `Scoate bulina ${dotNumber} de pe buburuz\u0103`);
         dot.addEventListener("click", () => {
           selectedDots.delete(dotNumber);
           updateDisplay();
@@ -796,7 +796,7 @@
         button.setAttribute("aria-pressed", String(isUsed));
         button.setAttribute(
           "aria-label",
-          isUsed ? `Bulina ${value} este pe buburuzÄƒ` : `Pune bulina ${value} pe buburuzÄƒ`
+          isUsed ? `Bulina ${value} este pe buburuz\u0103` : `Pune bulina ${value} pe buburuz\u0103`
         );
       });
 
@@ -814,7 +814,7 @@
     function addDot(value) {
       if (!targetNumber) {
         playTrySound();
-        setStatus("Alege mai Ã®ntÃ¢i o cifrÄƒ.", "try");
+        setStatus("Alege mai \u00eent\u00e2i o cifr\u0103.", "try");
         return;
       }
 
@@ -833,7 +833,7 @@
     function checkAnswer() {
       if (!targetNumber) {
         playTrySound();
-        setStatus("Alege o cifrÄƒ, apoi pune bulinele pe buburuzÄƒ.", "try");
+        setStatus("Alege o cifr\u0103, apoi pune bulinele pe buburuz\u0103.", "try");
         return;
       }
 
@@ -842,7 +842,7 @@
         setStatus(`Bravo! Ai pus exact ${targetNumber} ${dotWord(targetNumber)}.`, "good");
       } else {
         playTrySound();
-        setStatus(`Mai Ã®ncearcÄƒ. Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`, "try");
+        setStatus(`Mai \u00eencearc\u0103. Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`, "try");
       }
     }
 
