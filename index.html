@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Buburuza È™i bulinele</title>
+  <title>ÃŽnvÄƒÈ›Äƒm sÄƒ numÄƒrÄƒm cu Bubu</title>
   <style>
     :root {
       --red: #ff3045;
@@ -389,6 +389,10 @@
       color: #125364;
     }
 
+    .status:empty {
+      display: none;
+    }
+
     .status.good {
       color: #126c37;
       background: #e7ffd9;
@@ -599,8 +603,8 @@
 <body>
   <main class="app" aria-label="Activitate interactivÄƒ cu buburuza">
     <header class="top-bar">
-      <h1>Buburuza È™i bulinele</h1>
-      <p class="instruction">Alege o cifrÄƒ, apoi trage sau atinge exact atÃ¢tea buline pe buburuzÄƒ. Sunetul porneÈ™te la prima atingere.</p>
+      <h1>ÃŽnvÄƒÈ›Äƒm sÄƒ numÄƒrÄƒm cu Bubu</h1>
+      <p class="instruction">Alege o cifrÄƒ, apoi lipeÈ™te tot atÃ¢tea buline pe aripioare cÃ¢t Ã®È›i aratÄƒ cifra.</p>
     </header>
 
     <section class="garden" aria-label="Buburuza mare">
@@ -639,9 +643,7 @@
     </aside>
 
     <section class="control-panel" aria-label="Verificare rÄƒspuns">
-      <div class="status" id="status" role="status" aria-live="polite">
-        ÃŽncepe cu o cifrÄƒ din panoul din dreapta.
-      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
       <button class="action-btn check" id="checkButton" type="button">VerificÄƒ</button>
       <button class="action-btn reset" id="resetButton" type="button">Reia</button>
       <button class="action-btn fullscreen" id="fullscreenButton" type="button">Ecran complet</button>
@@ -700,7 +702,7 @@
       return audioContext;
     }
 
-    function playTone(frequency, duration = 0.22, start = 0, type = "sine", volume = 0.07) {
+    function playTone(frequency, duration = 0.22, start = 0, type = "sine", volume = 0.045) {
       const context = getAudioContext();
       if (!context) {
         return;
@@ -713,7 +715,7 @@
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(frequency, now);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.06);
       gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       oscillator.connect(gain);
@@ -723,30 +725,35 @@
     }
 
     function playClickSound() {
-      playTone(523.25, 0.16, 0, "sine", 0.045);
-      playTone(659.25, 0.18, 0.03, "sine", 0.035);
+      playTone(523.25, 0.24, 0, "sine", 0.026);
+      playTone(659.25, 0.26, 0.05, "sine", 0.022);
+      playTone(783.99, 0.22, 0.1, "triangle", 0.014);
     }
 
     function playDotSound() {
-      playTone(392, 0.18, 0, "sine", 0.045);
-      playTone(587.33, 0.2, 0.04, "sine", 0.035);
+      playTone(440, 0.2, 0, "sine", 0.024);
+      playTone(554.37, 0.22, 0.04, "sine", 0.02);
+      playTone(659.25, 0.18, 0.09, "triangle", 0.012);
     }
 
     function playSuccessSound() {
-      playTone(523.25, 0.24, 0, "sine", 0.055);
-      playTone(659.25, 0.24, 0.12, "sine", 0.052);
-      playTone(783.99, 0.34, 0.24, "sine", 0.05);
-      playTone(1046.5, 0.42, 0.38, "triangle", 0.032);
+      playTone(392, 0.32, 0, "sine", 0.028);
+      playTone(493.88, 0.32, 0.12, "sine", 0.026);
+      playTone(587.33, 0.34, 0.24, "sine", 0.026);
+      playTone(783.99, 0.42, 0.39, "triangle", 0.018);
+      playTone(987.77, 0.5, 0.54, "sine", 0.016);
     }
 
     function playTrySound() {
-      playTone(349.23, 0.22, 0, "sine", 0.045);
-      playTone(293.66, 0.28, 0.16, "sine", 0.04);
+      playTone(392, 0.28, 0, "sine", 0.022);
+      playTone(349.23, 0.32, 0.18, "sine", 0.02);
+      playTone(329.63, 0.36, 0.33, "triangle", 0.012);
     }
 
     function playResetSound() {
-      playTone(440, 0.18, 0, "sine", 0.042);
-      playTone(523.25, 0.22, 0.12, "sine", 0.038);
+      playTone(659.25, 0.18, 0, "sine", 0.022);
+      playTone(523.25, 0.24, 0.12, "sine", 0.018);
+      playTone(392, 0.28, 0.26, "triangle", 0.012);
     }
 
     function setStatus(message, type = "") {
@@ -768,7 +775,7 @@
         dot.addEventListener("click", () => {
           selectedDots.delete(dotNumber);
           updateDisplay();
-          setStatus(`Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`);
+          setStatus("");
         });
         ladybugZone.appendChild(dot);
       });
@@ -801,7 +808,7 @@
       targetNumber = value;
       selectedDots.clear();
       updateDisplay();
-      setStatus(`Ai ales cifra ${value}. Pune ${value} ${dotWord(value)} pe buburuzÄƒ.`);
+      setStatus("");
     }
 
     function addDot(value) {
@@ -820,7 +827,7 @@
       }
 
       updateDisplay();
-      setStatus(`Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`);
+      setStatus("");
     }
 
     function checkAnswer() {
@@ -844,7 +851,7 @@
       targetNumber = null;
       selectedDots.clear();
       updateDisplay();
-      setStatus("ÃŽncepe cu o cifrÄƒ din panoul din dreapta.");
+      setStatus("");
     }
 
     function openFullscreen() {
@@ -852,10 +859,10 @@
       const page = document.documentElement;
       if (!document.fullscreenElement && page.requestFullscreen) {
         page.requestFullscreen();
-        setStatus("Activitatea este pregÄƒtitÄƒ pentru Smart Board.");
+        setStatus("");
       } else if (document.exitFullscreen) {
         document.exitFullscreen();
-        setStatus("PoÈ›i reveni oricÃ¢nd la ecran complet.");
+        setStatus("");
       }
     }
 
