@@ -755,38 +755,63 @@
       oscillator.stop(now + duration + 0.02);
     }
 
-    function playNoiseBurst(start = 0, duration = 0.08, volume = 0.045) {
+    function playSoftClap(start = 0, volume = 0.022, pan = 0) {
       const context = getAudioContext();
       if (!context) {
         return;
       }
 
+      const duration = 0.16 + Math.random() * 0.08;
       const sampleCount = Math.floor(context.sampleRate * duration);
       const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
       const data = buffer.getChannelData(0);
 
       for (let index = 0; index < sampleCount; index += 1) {
-        data[index] = (Math.random() * 2 - 1) * (1 - index / sampleCount);
+        const progress = index / sampleCount;
+        const softAttack = Math.min(1, progress / 0.08);
+        const warmDecay = Math.pow(1 - progress, 2.4);
+        data[index] = (Math.random() * 2 - 1) * softAttack * warmDecay;
       }
 
       const source = context.createBufferSource();
-      const filter = context.createBiquadFilter();
+      const warmFilter = context.createBiquadFilter();
+      const airFilter = context.createBiquadFilter();
       const gain = context.createGain();
+      const echo = context.createDelay();
+      const echoGain = context.createGain();
+      const panner = context.createStereoPanner ? context.createStereoPanner() : null;
       const now = context.currentTime + start;
 
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(1500 + Math.random() * 500, now);
-      filter.Q.setValueAtTime(1.8, now);
+      warmFilter.type = "bandpass";
+      warmFilter.frequency.setValueAtTime(950 + Math.random() * 360, now);
+      warmFilter.Q.setValueAtTime(0.85, now);
+      airFilter.type = "lowpass";
+      airFilter.frequency.setValueAtTime(2600, now);
+      echo.delayTime.setValueAtTime(0.045 + Math.random() * 0.018, now);
+      echoGain.gain.setValueAtTime(volume * 0.36, now);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.018);
       gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       source.buffer = buffer;
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(context.destination);
+      source.connect(warmFilter);
+      warmFilter.connect(airFilter);
+      airFilter.connect(gain);
+      gain.connect(echo);
+      echo.connect(echoGain);
+
+      if (panner) {
+        panner.pan.setValueAtTime(pan, now);
+        gain.connect(panner);
+        echoGain.connect(panner);
+        panner.connect(context.destination);
+      } else {
+        gain.connect(context.destination);
+        echoGain.connect(context.destination);
+      }
+
       source.start(now);
-      source.stop(now + duration);
+      source.stop(now + duration + 0.08);
     }
 
     function playClickSound() {
@@ -823,10 +848,15 @@
     }
 
     function playApplauseSound(start = 0) {
-      for (let clap = 0; clap < 18; clap += 1) {
-        const delay = start + clap * 0.045 + Math.random() * 0.03;
-        playNoiseBurst(delay, 0.055 + Math.random() * 0.035, 0.025 + Math.random() * 0.018);
+      for (let clap = 0; clap < 16; clap += 1) {
+        const delay = start + clap * 0.075 + Math.random() * 0.035;
+        const pan = Math.random() * 1.2 - 0.6;
+        const volume = 0.014 + Math.random() * 0.014;
+        playSoftClap(delay, volume, pan);
       }
+
+      playTone(783.99, 0.18, start + 0.05, "triangle", 0.01);
+      playTone(1046.5, 0.22, start + 0.22, "sine", 0.009);
     }
 
     function launchConfetti() {
