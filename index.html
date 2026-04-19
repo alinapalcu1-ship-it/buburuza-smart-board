@@ -436,23 +436,51 @@
       z-index: 20;
     }
 
-    .confetti-piece {
+    .firework-burst {
       position: absolute;
-      top: -20px;
-      width: 14px;
-      height: 22px;
-      border-radius: 4px;
-      opacity: 0.96;
-      animation: confettiFall 1.8s ease-in forwards;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--spark);
+      box-shadow: 0 0 12px var(--spark), 0 0 26px rgba(255, 255, 255, 0.8);
+      animation: fireworkSpark 1.15s ease-out forwards;
     }
 
-    @keyframes confettiFall {
+    .firework-star {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      color: var(--spark);
+      font-size: 18px;
+      line-height: 1;
+      text-shadow: 0 0 12px currentColor;
+      animation: fireworkStar 1.3s ease-out forwards;
+    }
+
+    @keyframes fireworkSpark {
       0% {
-        transform: translate3d(0, -20px, 0) rotate(0deg);
+        transform: translate(-50%, -50%) scale(0.4);
+        opacity: 1;
+      }
+
+      78% {
+        opacity: 1;
       }
 
       100% {
-        transform: translate3d(var(--drift), 110vh, 0) rotate(720deg);
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.85);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fireworkStar {
+      0% {
+        transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.05) rotate(220deg);
         opacity: 0;
       }
     }
@@ -755,59 +783,6 @@
       oscillator.stop(now + duration + 0.02);
     }
 
-    function playKidClap(start = 0, volume = 0.018, pan = 0) {
-      const context = getAudioContext();
-      if (!context) {
-        return;
-      }
-
-      const duration = 0.115 + Math.random() * 0.025;
-      const sampleCount = Math.floor(context.sampleRate * duration);
-      const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      for (let index = 0; index < sampleCount; index += 1) {
-        const progress = index / sampleCount;
-        const firstPalm = Math.exp(-Math.pow(progress - 0.1, 2) / 0.004);
-        const secondPalm = Math.exp(-Math.pow(progress - 0.28, 2) / 0.006) * 0.62;
-        const tail = Math.exp(-progress * 10) * 0.25;
-        const envelope = firstPalm + secondPalm + tail;
-        data[index] = (Math.random() * 2 - 1) * envelope;
-      }
-
-      const source = context.createBufferSource();
-      const handFilter = context.createBiquadFilter();
-      const bodyFilter = context.createBiquadFilter();
-      const gain = context.createGain();
-      const panner = context.createStereoPanner ? context.createStereoPanner() : null;
-      const now = context.currentTime + start;
-
-      handFilter.type = "bandpass";
-      handFilter.frequency.setValueAtTime(1350 + Math.random() * 420, now);
-      handFilter.Q.setValueAtTime(1.1, now);
-      bodyFilter.type = "lowpass";
-      bodyFilter.frequency.setValueAtTime(3200, now);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-      source.buffer = buffer;
-      source.connect(handFilter);
-      handFilter.connect(bodyFilter);
-      bodyFilter.connect(gain);
-
-      if (panner) {
-        panner.pan.setValueAtTime(pan, now);
-        gain.connect(panner);
-        panner.connect(context.destination);
-      } else {
-        gain.connect(context.destination);
-      }
-
-      source.start(now);
-      source.stop(now + duration + 0.02);
-    }
-
     function playClickSound() {
       playTone(523.25, 0.22, 0, "sine", 0.022);
       playTone(659.25, 0.22, 0.07, "sine", 0.018);
@@ -826,7 +801,6 @@
       playTone(783.99, 0.32, 0.17, "sine", 0.024);
       playTone(987.77, 0.42, 0.34, "triangle", 0.017);
       playTone(1318.51, 0.5, 0.5, "sine", 0.012);
-      playApplauseSound(0.62);
     }
 
     function playTrySound() {
@@ -841,43 +815,40 @@
       playTone(392, 0.28, 0.26, "triangle", 0.012);
     }
 
-    function playApplauseSound(start = 0) {
-      const rhythm = [0, 0.16, 0.31, 0.49, 0.66, 0.82];
-
-      rhythm.forEach((beat, index) => {
-        playKidClap(start + beat, 0.016 + index * 0.001, -0.32);
-        playKidClap(start + beat + 0.025, 0.014, 0.28);
-        playKidClap(start + beat + 0.055, 0.011, Math.random() * 0.8 - 0.4);
-      });
-
-      playTone(880, 0.16, start + 0.03, "triangle", 0.008);
-      playTone(1174.66, 0.18, start + 0.33, "sine", 0.007);
-    }
-
     function launchConfetti() {
       const colors = ["#ff3045", "#ffe94a", "#3fe06f", "#17b8c7", "#ff6fa7", "#ffffff"];
+      const centers = [
+        { left: 22, top: 24 },
+        { left: 50, top: 18 },
+        { left: 78, top: 25 },
+        { left: 38, top: 38 },
+        { left: 64, top: 40 }
+      ];
       confettiLayer.innerHTML = "";
 
-      for (let index = 0; index < 70; index += 1) {
-        const piece = document.createElement("span");
-        const left = Math.random() * 100;
-        const drift = (Math.random() * 260 - 130).toFixed(0);
-        const delay = Math.random() * 0.35;
-        const duration = 1.35 + Math.random() * 0.9;
+      centers.forEach((center, burstIndex) => {
+        for (let index = 0; index < 28; index += 1) {
+          const spark = document.createElement("span");
+          const angle = (Math.PI * 2 * index) / 28;
+          const distance = 70 + Math.random() * 105;
+          const delay = burstIndex * 0.14 + Math.random() * 0.08;
 
-        piece.className = "confetti-piece";
-        piece.style.left = `${left}%`;
-        piece.style.background = colors[index % colors.length];
-        piece.style.setProperty("--drift", `${drift}px`);
-        piece.style.animationDelay = `${delay}s`;
-        piece.style.animationDuration = `${duration}s`;
-        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
-        confettiLayer.appendChild(piece);
-      }
+          spark.className = index % 7 === 0 ? "firework-star" : "firework-burst";
+          spark.textContent = index % 7 === 0 ? "âœ¦" : "";
+          spark.style.left = `${center.left}%`;
+          spark.style.top = `${center.top}%`;
+          spark.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+          spark.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+          spark.style.setProperty("--spark", colors[(index + burstIndex) % colors.length]);
+          spark.style.animationDelay = `${delay}s`;
+          spark.style.animationDuration = `${1.05 + Math.random() * 0.42}s`;
+          confettiLayer.appendChild(spark);
+        }
+      });
 
       window.setTimeout(() => {
         confettiLayer.innerHTML = "";
-      }, 2600);
+      }, 2400);
     }
 
     function setStatus(message, type = "") {
