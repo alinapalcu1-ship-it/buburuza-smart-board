@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buburuza și bulinele</title>
+  <style>
+    :root {
+      --red: #ff3045;
+      --red-dark: #c40024;
+      --ink: #19252b;
+      --leaf: #3fe06f;
+      --leaf-dark: #13a957;
+      --sky: #bff2ff;
+      --sun: #ffe94a;
+      --white: #ffffff;
+      --cyan: #17b8c7;
+      --pink: #ff6fa7;
+      --focus: #ffea00;
+      --panel: rgba(255, 255, 255, 0.82);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, var(--sky) 0 54%, #e5ffd8 54% 100%);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button {
+      font: inherit;
+      letter-spacing: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(500px, 1fr) minmax(320px, 430px);
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .top-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 58px);
+      line-height: 1;
+      color: #147647;
+      text-shadow: 3px 3px 0 var(--white);
+    }
+
+    .instruction {
+      margin: 0;
+      max-width: 740px;
+      font-size: clamp(20px, 2vw, 30px);
+      font-weight: 900;
+      text-align: right;
+      color: #0f5963;
+    }
+
+    .garden,
+    .numbers-panel,
+    .dots-panel,
+    .control-panel {
+      border: 4px solid rgba(25, 37, 43, 0.24);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 0 rgba(25, 37, 43, 0.14);
+    }
+
+    .garden {
+      grid-column: 1;
+      grid-row: 2 / 4;
+      position: relative;
+      min-height: 690px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.75) 0 55px, transparent 56px),
+        radial-gradient(circle at 75% 16%, rgba(255, 255, 255, 0.58) 0 74px, transparent 75px),
+        linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.08));
+    }
+
+    .grass {
+      position: absolute;
+      inset: auto -20px 0;
+      height: 15%;
+      background:
+        repeating-linear-gradient(100deg, transparent 0 24px, rgba(12, 160, 74, 0.44) 25px 32px),
+        linear-gradient(180deg, #78f06d, #20c461);
+      border-top: 6px solid rgba(19, 169, 87, 0.52);
+    }
+
+    .flower {
+      position: absolute;
+      width: 86px;
+      height: 86px;
+      display: grid;
+      place-items: center;
+    }
+
+    .flower::before {
+      content: "";
+      position: absolute;
+      width: 26px;
+      height: 74px;
+      top: 52px;
+      border-left: 8px solid var(--leaf-dark);
+      transform: rotate(8deg);
+    }
+
+    .flower span {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--pink);
+      border: 3px solid var(--ink);
+    }
+
+    .flower span:nth-child(1) { transform: translate(0, -26px); }
+    .flower span:nth-child(2) { transform: translate(26px, 0); background: #ff8cc0; }
+    .flower span:nth-child(3) { transform: translate(0, 26px); background: #ff4f93; }
+    .flower span:nth-child(4) { transform: translate(-26px, 0); background: #ff8cc0; }
+    .flower span:nth-child(5) {
+      transform: translate(0, 0);
+      width: 31px;
+      height: 31px;
+      background: var(--sun);
+      z-index: 1;
+    }
+
+    .flower.one { left: 7%; bottom: 14%; }
+    .flower.two { right: 8%; bottom: 13%; transform: scale(0.86); }
+
+    .ladybug-zone {
+      position: relative;
+      z-index: 1;
+      width: min(86vw, 650px);
+      max-width: 92%;
+      aspect-ratio: 1.22 / 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .ladybug-zone.drop-ready .body {
+      outline: 8px dashed var(--focus);
+      outline-offset: 8px;
+    }
+
+    .ladybug {
+      position: absolute;
+      inset: 0;
+      filter: drop-shadow(0 14px 0 rgba(25, 37, 43, 0.18));
+    }
+
+    .body {
+      position: absolute;
+      left: 3%;
+      bottom: 0;
+      width: 94%;
+      height: 82%;
+      border: 7px solid #10191d;
+      border-radius: 52% 52% 43% 43%;
+      background:
+        radial-gradient(ellipse at 28% 15%, rgba(255, 255, 255, 0.82) 0 12%, transparent 25%),
+        radial-gradient(ellipse at 20% 31%, rgba(255, 222, 214, 0.5) 0 9%, transparent 26%),
+        radial-gradient(ellipse at 72% 80%, rgba(116, 0, 20, 0.32), transparent 52%),
+        linear-gradient(90deg, transparent calc(50% - 4px), rgba(25, 10, 14, 0.76) calc(50% - 4px) calc(50% + 4px), transparent calc(50% + 4px)),
+        linear-gradient(115deg, #ff5d52 0%, #ff3045 48%, #c40024 100%);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .body::before {
+      content: "";
+      position: absolute;
+      inset: 6%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 16% 22%, rgba(255, 240, 200, 0.2) 0 2px, transparent 3px),
+        radial-gradient(circle at 78% 34%, rgba(255, 240, 200, 0.18) 0 2px, transparent 3px),
+        radial-gradient(circle at 33% 66%, rgba(255, 240, 200, 0.14) 0 2px, transparent 3px),
+        radial-gradient(circle at 62% 72%, rgba(255, 240, 200, 0.13) 0 2px, transparent 3px);
+      pointer-events: none;
+    }
+
+    .head {
+      position: absolute;
+      top: 7%;
+      left: 24%;
+      width: 52%;
+      height: 31%;
+      border: 6px solid #11191d;
+      border-radius: 43% 43% 41% 41%;
+      background:
+        radial-gradient(ellipse at 33% 18%, rgba(255, 255, 255, 0.16) 0 15%, transparent 36%),
+        radial-gradient(ellipse at 50% 40%, #202020, #070707 67%);
+      z-index: 2;
+    }
+
+    .leg {
+      position: absolute;
+      width: 26%;
+      height: 8px;
+      border-radius: 999px;
+      background: #0b0e10;
+      z-index: 0;
+      transform-origin: right center;
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .leg.left.one { left: -5%; top: 43%; transform: rotate(25deg); }
+    .leg.left.two { left: -8%; top: 57%; transform: rotate(2deg); }
+    .leg.left.three { left: -4%; top: 70%; transform: rotate(-25deg); }
+    .leg.right { transform-origin: left center; }
+    .leg.right.one { right: -5%; top: 43%; transform: rotate(-25deg); }
+    .leg.right.two { right: -8%; top: 57%; transform: rotate(-2deg); }
+    .leg.right.three { right: -4%; top: 70%; transform: rotate(25deg); }
+
+    .placed-dot {
+      position: absolute;
+      width: 11.5%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 6px solid #050709;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.34) 0 13%, transparent 14%),
+        #111416;
+      z-index: 4;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+    }
+
+    .placed-dot:focus-visible {
+      outline: 6px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .side-column {
+      grid-column: 2;
+      grid-row: 2;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+      align-self: stretch;
+    }
+
+    .numbers-panel,
+    .dots-panel {
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: clamp(20px, 2vw, 30px);
+      font-weight: 900;
+      text-align: center;
+      color: var(--ink);
+    }
+
+    .number-dot-list {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(54px, 1fr));
+      gap: 12px;
+      align-content: start;
+    }
+
+    .dots-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(82px, 1fr));
+      gap: 14px;
+      align-content: center;
+    }
+
+    .number-btn {
+      min-height: 66px;
+      border: 4px solid var(--ink);
+      border-radius: 8px;
+      background: var(--sun);
+      color: var(--ink);
+      font-size: clamp(30px, 3vw, 46px);
+      font-weight: 900;
+      box-shadow: 0 7px 0 #d2a600;
+    }
+
+    .number-btn.selected {
+      background: var(--cyan);
+      color: var(--white);
+      box-shadow: 0 7px 0 #0b7a86;
+    }
+
+    .source-dot {
+      justify-self: center;
+      width: min(100%, 92px);
+      aspect-ratio: 1;
+      border: 6px solid #050709;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 26%, rgba(255,255,255,0.34) 0 14%, transparent 15%),
+        #111416;
+      color: transparent;
+      box-shadow: 0 8px 0 rgba(0, 0, 0, 0.28);
+    }
+
+    .source-dot .dot-number {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    .source-dot.highlight {
+      border-color: var(--ink);
+      background:
+        radial-gradient(circle at 34% 26%, rgba(255,255,255,0.65) 0 14%, transparent 15%),
+        var(--focus);
+      box-shadow: 0 0 0 8px rgba(255, 234, 0, 0.34), 0 8px 0 #c8ac00;
+    }
+
+    .source-dot.used {
+      background:
+        radial-gradient(circle at 34% 26%, rgba(255,255,255,0.58) 0 14%, transparent 15%),
+        var(--leaf);
+      box-shadow: 0 8px 0 var(--leaf-dark);
+    }
+
+    .source-dot.used.highlight {
+      box-shadow: 0 0 0 8px rgba(255, 234, 0, 0.42), 0 8px 0 var(--leaf-dark);
+    }
+
+    .number-btn:hover,
+    .number-btn:focus-visible,
+    .source-dot:hover,
+    .source-dot:focus-visible,
+    .action-btn:hover,
+    .action-btn:focus-visible {
+      outline: 5px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .control-panel {
+      grid-column: 2;
+      grid-row: 3;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .status {
+      grid-column: 1 / -1;
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      border: 4px dashed rgba(25, 37, 43, 0.35);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.74);
+      font-size: clamp(21px, 2.2vw, 32px);
+      font-weight: 900;
+      color: #125364;
+    }
+
+    .status.good {
+      color: #126c37;
+      background: #e7ffd9;
+      border-color: var(--leaf);
+    }
+
+    .status.try {
+      color: #8a1737;
+      background: #ffe1ed;
+      border-color: var(--pink);
+    }
+
+    .action-btn {
+      min-height: 76px;
+      border: 4px solid var(--ink);
+      border-radius: 8px;
+      font-size: clamp(24px, 2.3vw, 34px);
+      font-weight: 900;
+      color: var(--ink);
+      box-shadow: 0 8px 0 rgba(25, 37, 43, 0.35);
+    }
+
+    .check {
+      background: var(--leaf);
+      color: var(--white);
+    }
+
+    .reset {
+      background: var(--white);
+    }
+
+    .fullscreen {
+      background: var(--sun);
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+      }
+
+      .top-bar,
+      .garden,
+      .side-column,
+      .control-panel {
+        grid-column: 1;
+      }
+
+      .top-bar {
+        display: grid;
+      }
+
+      .instruction {
+        text-align: left;
+      }
+
+      .garden {
+        grid-row: 2;
+        min-height: 500px;
+      }
+
+      .side-column {
+        grid-row: 3;
+      }
+
+      .number-dot-list {
+        grid-template-columns: repeat(5, minmax(72px, 1fr));
+      }
+
+      .dots-list {
+        grid-template-columns: repeat(5, minmax(70px, 1fr));
+      }
+
+      .control-panel {
+        grid-row: 4;
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        padding: 10px;
+        gap: 12px;
+      }
+
+      .garden {
+        min-height: 430px;
+      }
+
+      .number-dot-list {
+        grid-template-columns: repeat(5, minmax(52px, 1fr));
+      }
+
+      .dots-list {
+        grid-template-columns: repeat(2, minmax(92px, 1fr));
+      }
+
+      .control-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        grid-column: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Activitate interactivă cu buburuza">
+    <header class="top-bar">
+      <h1>Buburuza și bulinele</h1>
+      <p class="instruction">Alege o cifră, apoi trage sau atinge exact atâtea buline pe buburuză. Sunetul pornește la prima atingere.</p>
+    </header>
+
+    <section class="garden" aria-label="Buburuza mare">
+      <div class="grass" aria-hidden="true"></div>
+      <div class="flower one" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="flower two" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="ladybug-zone" id="ladybugZone" role="img" aria-label="O buburuză mare pe care se pot pune buline">
+        <div class="ladybug" aria-hidden="true">
+          <div class="leg left one"></div>
+          <div class="leg left two"></div>
+          <div class="leg left three"></div>
+          <div class="leg right one"></div>
+          <div class="leg right two"></div>
+          <div class="leg right three"></div>
+          <div class="body"></div>
+          <div class="head"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-column" aria-label="Panouri separate pentru cifre și buline">
+      <section class="numbers-panel" aria-labelledby="numbers-title">
+        <h2 class="panel-title" id="numbers-title">Cifre</h2>
+        <div class="number-dot-list" id="numberList" aria-label="Alege cifra"></div>
+      </section>
+
+      <section class="dots-panel" aria-labelledby="dots-title">
+        <h2 class="panel-title" id="dots-title">Buline</h2>
+        <div class="dots-list" id="dotsList" aria-label="Buline de tras pe buburuză"></div>
+      </section>
+    </aside>
+
+    <section class="control-panel" aria-label="Verificare răspuns">
+      <div class="status" id="status" role="status" aria-live="polite">
+        Începe cu o cifră din panoul din dreapta.
+      </div>
+      <button class="action-btn check" id="checkButton" type="button">Verifică</button>
+      <button class="action-btn reset" id="resetButton" type="button">Reia</button>
+      <button class="action-btn fullscreen" id="fullscreenButton" type="button">Ecran complet</button>
+    </section>
+  </main>
+
+  <script>
+    const numberList = document.getElementById("numberList");
+    const dotsList = document.getElementById("dotsList");
+    const ladybugZone = document.getElementById("ladybugZone");
+    const statusBox = document.getElementById("status");
+    const checkButton = document.getElementById("checkButton");
+    const resetButton = document.getElementById("resetButton");
+    const fullscreenButton = document.getElementById("fullscreenButton");
+    let audioContext = null;
+
+    const dotPositions = [
+      { left: 24, top: 43 },
+      { left: 76, top: 43 },
+      { left: 18, top: 57 },
+      { left: 82, top: 57 },
+      { left: 28, top: 72 },
+      { left: 72, top: 72 },
+      { left: 40, top: 48 },
+      { left: 60, top: 48 },
+      { left: 41, top: 66 },
+      { left: 59, top: 66 },
+      { left: 30, top: 32 },
+      { left: 70, top: 32 },
+      { left: 50, top: 56 },
+      { left: 50, top: 78 },
+      { left: 50, top: 38 }
+    ];
+
+    let targetNumber = null;
+    const selectedDots = new Set();
+
+    function dotWord(count) {
+      return count === 1 ? "bulină" : "buline";
+    }
+
+    function getAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        return null;
+      }
+
+      if (!audioContext) {
+        audioContext = new AudioContextClass();
+      }
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      return audioContext;
+    }
+
+    function playTone(frequency, duration = 0.22, start = 0, type = "sine", volume = 0.07) {
+      const context = getAudioContext();
+      if (!context) {
+        return;
+      }
+
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime + start;
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.02);
+    }
+
+    function playClickSound() {
+      playTone(523.25, 0.16, 0, "sine", 0.045);
+      playTone(659.25, 0.18, 0.03, "sine", 0.035);
+    }
+
+    function playDotSound() {
+      playTone(392, 0.18, 0, "sine", 0.045);
+      playTone(587.33, 0.2, 0.04, "sine", 0.035);
+    }
+
+    function playSuccessSound() {
+      playTone(523.25, 0.24, 0, "sine", 0.055);
+      playTone(659.25, 0.24, 0.12, "sine", 0.052);
+      playTone(783.99, 0.34, 0.24, "sine", 0.05);
+      playTone(1046.5, 0.42, 0.38, "triangle", 0.032);
+    }
+
+    function playTrySound() {
+      playTone(349.23, 0.22, 0, "sine", 0.045);
+      playTone(293.66, 0.28, 0.16, "sine", 0.04);
+    }
+
+    function playResetSound() {
+      playTone(440, 0.18, 0, "sine", 0.042);
+      playTone(523.25, 0.22, 0.12, "sine", 0.038);
+    }
+
+    function setStatus(message, type = "") {
+      statusBox.textContent = message;
+      statusBox.className = `status ${type}`.trim();
+    }
+
+    function renderPlacedDots() {
+      document.querySelectorAll(".placed-dot").forEach((dot) => dot.remove());
+
+      [...selectedDots].sort((a, b) => a - b).forEach((dotNumber) => {
+        const dot = document.createElement("button");
+        const position = dotPositions[dotNumber - 1];
+        dot.type = "button";
+        dot.className = "placed-dot";
+        dot.style.left = `${position.left}%`;
+        dot.style.top = `${position.top}%`;
+        dot.setAttribute("aria-label", `Scoate bulina ${dotNumber} de pe buburuză`);
+        dot.addEventListener("click", () => {
+          selectedDots.delete(dotNumber);
+          updateDisplay();
+          setStatus(`Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`);
+        });
+        ladybugZone.appendChild(dot);
+      });
+    }
+
+    function updateDisplay() {
+      document.querySelectorAll(".number-btn").forEach((button) => {
+        const value = Number(button.dataset.number);
+        button.classList.toggle("selected", value === targetNumber);
+        button.setAttribute("aria-pressed", String(value === targetNumber));
+      });
+
+      document.querySelectorAll(".source-dot").forEach((button) => {
+        const value = Number(button.dataset.number);
+        const isUsed = selectedDots.has(value);
+        button.classList.toggle("used", isUsed);
+        button.classList.toggle("highlight", value === targetNumber);
+        button.setAttribute("aria-pressed", String(isUsed));
+        button.setAttribute(
+          "aria-label",
+          isUsed ? `Bulina ${value} este pe buburuză` : `Pune bulina ${value} pe buburuză`
+        );
+      });
+
+      renderPlacedDots();
+    }
+
+    function selectNumber(value) {
+      playClickSound();
+      targetNumber = value;
+      selectedDots.clear();
+      updateDisplay();
+      setStatus(`Ai ales cifra ${value}. Pune ${value} ${dotWord(value)} pe buburuză.`);
+    }
+
+    function addDot(value) {
+      if (!targetNumber) {
+        playTrySound();
+        setStatus("Alege mai întâi o cifră.", "try");
+        return;
+      }
+
+      playDotSound();
+
+      if (selectedDots.has(value)) {
+        selectedDots.delete(value);
+      } else {
+        selectedDots.add(value);
+      }
+
+      updateDisplay();
+      setStatus(`Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`);
+    }
+
+    function checkAnswer() {
+      if (!targetNumber) {
+        playTrySound();
+        setStatus("Alege o cifră, apoi pune bulinele pe buburuză.", "try");
+        return;
+      }
+
+      if (selectedDots.size === targetNumber) {
+        playSuccessSound();
+        setStatus(`Bravo! Ai pus exact ${targetNumber} ${dotWord(targetNumber)}.`, "good");
+      } else {
+        playTrySound();
+        setStatus(`Mai încearcă. Ai selectat ${selectedDots.size} ${dotWord(selectedDots.size)}.`, "try");
+      }
+    }
+
+    function resetGame() {
+      playResetSound();
+      targetNumber = null;
+      selectedDots.clear();
+      updateDisplay();
+      setStatus("Începe cu o cifră din panoul din dreapta.");
+    }
+
+    function openFullscreen() {
+      playClickSound();
+      const page = document.documentElement;
+      if (!document.fullscreenElement && page.requestFullscreen) {
+        page.requestFullscreen();
+        setStatus("Activitatea este pregătită pentru Smart Board.");
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setStatus("Poți reveni oricând la ecran complet.");
+      }
+    }
+
+    for (let number = 1; number <= 10; number += 1) {
+      const numberButton = document.createElement("button");
+      numberButton.type = "button";
+      numberButton.className = "number-btn";
+      numberButton.dataset.number = String(number);
+      numberButton.textContent = String(number);
+      numberButton.setAttribute("aria-pressed", "false");
+      numberButton.addEventListener("click", () => selectNumber(number));
+      numberList.appendChild(numberButton);
+    }
+
+    for (let number = 1; number <= 15; number += 1) {
+      const dotButton = document.createElement("button");
+      dotButton.type = "button";
+      dotButton.className = "source-dot";
+      dotButton.dataset.number = String(number);
+      dotButton.draggable = true;
+      dotButton.setAttribute("aria-pressed", "false");
+      dotButton.addEventListener("click", () => addDot(number));
+      dotButton.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", String(number));
+        event.dataTransfer.effectAllowed = "copy";
+      });
+
+      dotsList.appendChild(dotButton);
+    }
+
+    ladybugZone.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      ladybugZone.classList.add("drop-ready");
+    });
+
+    ladybugZone.addEventListener("dragleave", () => {
+      ladybugZone.classList.remove("drop-ready");
+    });
+
+    ladybugZone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      ladybugZone.classList.remove("drop-ready");
+      const value = Number(event.dataTransfer.getData("text/plain"));
+      if (Number.isInteger(value) && value >= 1 && value <= 10) {
+        addDot(value);
+      }
+    });
+
+    checkButton.addEventListener("click", checkAnswer);
+    resetButton.addEventListener("click", resetGame);
+    fullscreenButton.addEventListener("click", openFullscreen);
+    updateDisplay();
+  </script>
+</body>
+</html>
