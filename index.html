@@ -428,6 +428,35 @@
       background: var(--sun);
     }
 
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      width: 14px;
+      height: 22px;
+      border-radius: 4px;
+      opacity: 0.96;
+      animation: confettiFall 1.8s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translate3d(0, -20px, 0) rotate(0deg);
+      }
+
+      100% {
+        transform: translate3d(var(--drift), 110vh, 0) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
     @media (max-width: 980px) {
       .app {
         grid-template-columns: 1fr;
@@ -649,6 +678,7 @@
       <button class="action-btn fullscreen" id="fullscreenButton" type="button">Ecran complet</button>
     </section>
   </main>
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
 
   <script>
     const numberList = document.getElementById("numberList");
@@ -658,6 +688,7 @@
     const checkButton = document.getElementById("checkButton");
     const resetButton = document.getElementById("resetButton");
     const fullscreenButton = document.getElementById("fullscreenButton");
+    const confettiLayer = document.getElementById("confettiLayer");
     let audioContext = null;
 
     const dotPositions = [
@@ -724,36 +755,104 @@
       oscillator.stop(now + duration + 0.02);
     }
 
+    function playNoiseBurst(start = 0, duration = 0.08, volume = 0.045) {
+      const context = getAudioContext();
+      if (!context) {
+        return;
+      }
+
+      const sampleCount = Math.floor(context.sampleRate * duration);
+      const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let index = 0; index < sampleCount; index += 1) {
+        data[index] = (Math.random() * 2 - 1) * (1 - index / sampleCount);
+      }
+
+      const source = context.createBufferSource();
+      const filter = context.createBiquadFilter();
+      const gain = context.createGain();
+      const now = context.currentTime + start;
+
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1500 + Math.random() * 500, now);
+      filter.Q.setValueAtTime(1.8, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(context.destination);
+      source.start(now);
+      source.stop(now + duration);
+    }
+
     function playClickSound() {
-      playTone(523.25, 0.24, 0, "sine", 0.026);
-      playTone(659.25, 0.26, 0.05, "sine", 0.022);
-      playTone(783.99, 0.22, 0.1, "triangle", 0.014);
+      playTone(523.25, 0.22, 0, "sine", 0.022);
+      playTone(659.25, 0.22, 0.07, "sine", 0.018);
+      playTone(783.99, 0.2, 0.14, "triangle", 0.012);
     }
 
     function playDotSound() {
-      playTone(440, 0.2, 0, "sine", 0.024);
-      playTone(554.37, 0.22, 0.04, "sine", 0.02);
-      playTone(659.25, 0.18, 0.09, "triangle", 0.012);
+      playTone(493.88, 0.18, 0, "sine", 0.022);
+      playTone(587.33, 0.2, 0.05, "sine", 0.018);
+      playTone(739.99, 0.18, 0.11, "triangle", 0.011);
     }
 
     function playSuccessSound() {
-      playTone(392, 0.32, 0, "sine", 0.028);
-      playTone(493.88, 0.32, 0.12, "sine", 0.026);
-      playTone(587.33, 0.34, 0.24, "sine", 0.026);
-      playTone(783.99, 0.42, 0.39, "triangle", 0.018);
-      playTone(987.77, 0.5, 0.54, "sine", 0.016);
+      playTone(523.25, 0.3, 0, "sine", 0.026);
+      playTone(659.25, 0.3, 0.02, "sine", 0.022);
+      playTone(783.99, 0.32, 0.17, "sine", 0.024);
+      playTone(987.77, 0.42, 0.34, "triangle", 0.017);
+      playTone(1318.51, 0.5, 0.5, "sine", 0.012);
+      playApplauseSound(0.72);
     }
 
     function playTrySound() {
-      playTone(392, 0.28, 0, "sine", 0.022);
-      playTone(349.23, 0.32, 0.18, "sine", 0.02);
-      playTone(329.63, 0.36, 0.33, "triangle", 0.012);
+      playTone(392, 0.22, 0, "triangle", 0.025);
+      playTone(311.13, 0.28, 0.18, "sine", 0.022);
+      playTone(261.63, 0.34, 0.36, "sine", 0.018);
     }
 
     function playResetSound() {
       playTone(659.25, 0.18, 0, "sine", 0.022);
       playTone(523.25, 0.24, 0.12, "sine", 0.018);
       playTone(392, 0.28, 0.26, "triangle", 0.012);
+    }
+
+    function playApplauseSound(start = 0) {
+      for (let clap = 0; clap < 18; clap += 1) {
+        const delay = start + clap * 0.045 + Math.random() * 0.03;
+        playNoiseBurst(delay, 0.055 + Math.random() * 0.035, 0.025 + Math.random() * 0.018);
+      }
+    }
+
+    function launchConfetti() {
+      const colors = ["#ff3045", "#ffe94a", "#3fe06f", "#17b8c7", "#ff6fa7", "#ffffff"];
+      confettiLayer.innerHTML = "";
+
+      for (let index = 0; index < 70; index += 1) {
+        const piece = document.createElement("span");
+        const left = Math.random() * 100;
+        const drift = (Math.random() * 260 - 130).toFixed(0);
+        const delay = Math.random() * 0.35;
+        const duration = 1.35 + Math.random() * 0.9;
+
+        piece.className = "confetti-piece";
+        piece.style.left = `${left}%`;
+        piece.style.background = colors[index % colors.length];
+        piece.style.setProperty("--drift", `${drift}px`);
+        piece.style.animationDelay = `${delay}s`;
+        piece.style.animationDuration = `${duration}s`;
+        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+        confettiLayer.appendChild(piece);
+      }
+
+      window.setTimeout(() => {
+        confettiLayer.innerHTML = "";
+      }, 2600);
     }
 
     function setStatus(message, type = "") {
@@ -839,6 +938,7 @@
 
       if (selectedDots.size === targetNumber) {
         playSuccessSound();
+        launchConfetti();
         setStatus(`Bravo! Ai pus exact ${targetNumber} ${dotWord(targetNumber)}.`, "good");
       } else {
         playTrySound();
